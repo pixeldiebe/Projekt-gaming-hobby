@@ -11,6 +11,18 @@ node tools/serve.mjs
 
 Dann http://localhost:8642 öffnen. Doppelklick auf `index.html` geht auch, nur die Google-Schrift braucht Internet.
 
+## 3D-Regal (experimentell)
+
+`3d/` ist die WebGL/WebGPU-Version: Nussbaum-Regal mit Spiegelung, Hüllen mit dem Rücken nach vorn, zum Herausziehen anklicken.
+Läuft nur über den Server (http://localhost:8642/3d/), nicht per Doppelklick. Teilt Daten, Cover und Sammlungsstatus mit Version 1.
+
+- three.js 0.186.1 (WebGPU-Renderer, Fallback WebGL 2) per Import Map vom CDN, kein Build-Schritt
+- `3d/systems.js`: Verpackungsmaße und Rückendesign pro System
+- `3d/textures.js`: Holz und Hüllenrücken, prozedural per Canvas
+- `3d/main.js`: Szene, Licht, Spiegelung, Interaktion, Effekte
+
+Bedienung: Klick zieht ein Spiel heraus, Ziehen dreht die Hülle, ← → blättert, Esc stellt zurück.
+
 ## Ein Spiel hinzufügen
 
 1. In `data/games.js` eine Zeile ergänzen, zum Beispiel:

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spieleregal 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Bungee&display=swap" rel="stylesheet">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.webgpu.min.js",
+      "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.webgpu.min.js",
+      "three/tsl": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.tsl.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+    }
+  }
+  </script>
+  <style>
+    :root {
+      --text: oklch(94% .02 70);
+      --muted: oklch(75% .03 60);
+      --accent: oklch(80% .15 70);
+      --ok: oklch(80% .15 150);
+      --glass: oklch(22% .01 60 / .5);
+      --line: oklch(100% 0 0 / .1);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #b8b1a7; color: var(--text); font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
+    canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; view-transition-name: stage; }
+    ::view-transition-old(stage), ::view-transition-new(stage) { animation-duration: .6s; }
+
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+      padding: 16px 20px;
+      background: var(--glass); backdrop-filter: blur(18px) saturate(1.4);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { font-family: Bungee, sans-serif; font-size: 20px; color: var(--text); text-decoration: none; }
+    .brand span { color: var(--accent); }
+    nav { display: flex; gap: 6px; flex-wrap: wrap; }
+    nav button {
+      border: 1px solid var(--line); background: oklch(100% 0 0 / .04); color: var(--muted);
+      padding: 5px 12px; border-radius: 999px; font: inherit; font-size: 13px; cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    nav button:hover { color: var(--text); }
+    nav button[aria-pressed="true"] { background: var(--accent); color: #241505; font-weight: 600; border-color: transparent; }
+    .classic { margin-left: auto; color: var(--muted); font-size: 13px; }
+
+    #tip {
+      position: fixed; left: 0; top: 0; z-index: 6; pointer-events: none;
+      padding: 8px 12px; border-radius: 10px; background: var(--glass); backdrop-filter: blur(14px) saturate(1.4);
+      border: 1px solid var(--line); display: grid; gap: 1px; max-width: 280px;
+    }
+    #tip[hidden] { display: none; }
+    #tip b { font-weight: 600; }
+    #tip span { color: var(--muted); font-size: 13px; }
+
+    #panel {
+      position: fixed; z-index: 5; top: 80px; right: 24px; bottom: 24px; width: min(420px, 40vw);
+      padding: 28px 28px 22px; border-radius: 22px; overflow-y: auto;
+      background: var(--glass); backdrop-filter: blur(24px) saturate(1.5);
+      border: 1px solid var(--line); box-shadow: 0 30px 80px #000a;
+      opacity: 0; translate: 40px 0; pointer-events: none;
+      transition: opacity .45s, translate .6s cubic-bezier(.2,.8,.2,1);
+    }
+    #panel.open { opacity: 1; translate: 0 0; pointer-events: auto; transition-delay: .2s; }
+    #panel .x { position: absolute; top: 14px; right: 14px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: none; color: var(--text); font-size: 20px; cursor: pointer; }
+    #panel .kicker { color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    #panel h2 { font-family: Bungee, sans-serif; font-weight: 400; font-size: clamp(22px, 2.4vw, 32px); line-height: 1.1; margin: 6px 0 16px; text-wrap: balance; }
+    #panel dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0 0 16px; font-size: 14px; }
+    #panel dt { color: var(--muted); }
+    #panel dd { margin: 0; }
+    #panel .desc { margin: 0 0 4px; color: oklch(88% .02 70); text-wrap: pretty; }
+    #panel .src, #panel .hint { font-size: 12px; color: var(--muted); }
+    #panel .src a { color: inherit; }
+    #panel .own { display: flex; align-items: center; gap: 12px; margin: 18px 0 14px; cursor: pointer; }
+    #panel .own input { appearance: none; width: 44px; height: 26px; border-radius: 99px; background: oklch(40% .02 50); position: relative; cursor: pointer; margin: 0; transition: background .2s; }
+    #panel .own input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: translate .2s; }
+    #panel .own input:checked { background: var(--ok); }
+    #panel .own input:checked::after { translate: 18px 0; }
+    #panel .note span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    #panel textarea { width: 100%; min-height: 84px; resize: vertical; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: #0004; color: var(--text); font: inherit; field-sizing: content; }
+
+    .hud { position: fixed; left: 20px; bottom: 16px; z-index: 5; font-size: 12px; color: var(--muted); display: flex; gap: 10px; }
+    .hud span:empty { display: none; }
+    .hud span { background: var(--glass); backdrop-filter: blur(10px); padding: 3px 8px; border: 1px solid var(--line); border-radius: 99px; }
+    body.inspecting .hud { opacity: 0; }
+    .hud { transition: opacity .3s; }
+    #loader { position: fixed; inset: 0; display: grid; place-items: center; z-index: 9; font-family: Bungee, sans-serif; color: #4a4038; transition: opacity .8s; pointer-events: none; }
+    body.ready #loader { opacity: 0; }
+
+    @media (max-width: 760px) {
+      #panel { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; max-height: 48vh; translate: 0 40px; }
+      .classic { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gl"></canvas>
+  <header>
+    <a class="brand" href="../index.html">Spiele<span>regal</span> 3D</a>
+    <nav id="systems" aria-label="Systeme"></nav>
+    <a class="classic" href="../index.html">Klassische Ansicht</a>
+  </header>
+  <div id="tip" hidden></div>
+  <aside id="panel" aria-live="polite"></aside>
+  <div class="hud"><span id="backend">…</span><span id="fps"></span></div>
+  <div id="loader">Regal wird eingeräumt …</div>
+
+  <script src="../data/games.js"></script>
+  <script src="../data/meta.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
