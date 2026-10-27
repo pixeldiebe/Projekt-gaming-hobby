@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spieleregal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <a href="#/" class="logo">Spiele<span>regal</span></a>
+    <div class="top-actions">
+      <span class="stats" id="stats"></span>
+      <button class="btn ghost" id="export" title="Sammlungsstatus und Notizen als data/games.js speichern">Liste exportieren</button>
+    </div>
+  </header>
+
+  <main id="view"></main>
+
+  <dialog id="detail" aria-label="Spieldetails">
+    <button class="close" data-close aria-label="Schließen">×</button>
+    <button class="nav prev" data-step="-1" aria-label="Vorheriges Spiel">‹</button>
+    <button class="nav next" data-step="1" aria-label="Nächstes Spiel">›</button>
+    <div class="detail-body" id="detail-body"></div>
+  </dialog>
+
+  <script src="data/games.js"></script>
+  <script src="data/meta.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
